@@ -2,8 +2,25 @@
 import os
 import sys
 import typer
-from typing import Optional
+from typing import Optional, List
 from utils.console import console, show_banner, show_error
+
+
+def _parse_indices(indices: str) -> List[int]:
+    result = []
+    for part in indices.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "-" in part:
+            parts = part.split("-")
+            if len(parts) != 2:
+                raise ValueError(f"Invalid range: {part}")
+            start, end = int(parts[0].strip()), int(parts[1].strip())
+            result.extend(range(start, end + 1))
+        else:
+            result.append(int(part))
+    return result
 from commands.search import search_papers
 from commands.doi import fetch_by_doi
 from commands.abstract import fetch_abstract
@@ -47,10 +64,13 @@ app = typer.Typer(
     research search "software arch" --limit 5
 
     research save 1,2,3
+    research save 1-5
+    research save 1,2-8,10-13
 
     research reading-list
 
     research remove 1,2,3
+    research remove 1-5
 
     research export bibtex --output references.bib
 
@@ -261,18 +281,22 @@ def trend(
 @app.command()
 def save(
     indices: str = typer.Argument(
-        ..., help="Paper indices to save, comma-separated (e.g. 1,2,3)"
+        ...,
+        help="Paper indices to save, e.g. 1,2,3 or 1-5 or 1,2-8,10-13",
     ),
 ):
     """Save search results to reading list by index.
 
     Run 'research search' first to populate results, then
     use the row numbers from the results table to save.
+    Supports ranges like [bold]1-5[/bold] and mixed format.
 
     Examples:
 
       $ research search "microservices" --limit 10
       $ research save 1,2,3
+      $ research save 1-5
+      $ research save 1,2-8,10-13
     """
     from commands.search import get_last_results
 
@@ -282,9 +306,9 @@ def save(
         return
 
     try:
-        indices_list = [int(i.strip()) for i in indices.split(",")]
+        indices_list = _parse_indices(indices)
     except ValueError:
-        show_error("Indices must be comma-separated numbers.")
+        show_error("Invalid format. Use numbers and ranges, e.g. 1,2-8,10-13")
         return
 
     add_to_reading_list(papers, indices_list)
@@ -307,23 +331,27 @@ def reading_list():
 @app.command()
 def remove(
     indices: str = typer.Argument(
-        ..., help="Paper indices to remove, comma-separated (e.g. 1,2,3)"
+        ...,
+        help="Paper indices to remove, e.g. 1,2,3 or 1-5 or 1,2-8,10-13",
     ),
 ):
     """Remove papers from reading list by index.
 
     Use row numbers from 'research reading-list' output.
     Prompts for confirmation before removing.
+    Supports ranges like [bold]1-5[/bold] and mixed format.
 
     Examples:
 
       $ research remove 1
       $ research remove 1,2,3
+      $ research remove 1-5
+      $ research remove 1,2-8,10-13
     """
     try:
-        indices_list = [int(i.strip()) for i in indices.split(",")]
+        indices_list = _parse_indices(indices)
     except ValueError:
-        show_error("Indices must be comma-separated numbers.")
+        show_error("Invalid format. Use numbers and ranges, e.g. 1,2-8,10-13")
         return
     remove_from_reading_list(indices_list)
 
