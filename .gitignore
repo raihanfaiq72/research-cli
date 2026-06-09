@@ -1,0 +1,37 @@
+# Environment
+.env
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+
+# Data
+data/reading_list.json
+data/last_search.json
+
+# Cache
+.cache/
+
+# Downloads
+downloads/
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Distribution
+dist/
+build/
+*.egg
