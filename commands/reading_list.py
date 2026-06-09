@@ -2,8 +2,32 @@ import json
 import os
 from typing import List, Optional
 from models.paper import Paper
-from utils.console import console, show_search_results, show_message, show_error, confirm_action
+from utils.console import (
+    console,
+    show_search_results,
+    show_paper_detail,
+    show_message,
+    show_error,
+    confirm_action,
+)
 from config import settings
+
+
+def parse_indices(indices: str) -> List[int]:
+    result = []
+    for part in indices.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if "-" in part:
+            parts = part.split("-")
+            if len(parts) != 2:
+                raise ValueError(f"Invalid range: {part}")
+            start, end = int(parts[0].strip()), int(parts[1].strip())
+            result.extend(range(start, end + 1))
+        else:
+            result.append(int(part))
+    return result
 
 
 def _load_reading_list() -> List[dict]:
@@ -81,3 +105,22 @@ def list_reading_list():
 def get_reading_list_papers() -> List[Paper]:
     items = _load_reading_list()
     return [Paper(**item) for item in items]
+
+
+def read_reading_list(indices: List[int]):
+    items = _load_reading_list()
+    if not items:
+        show_error("Reading list is empty.")
+        return
+
+    found = 0
+    for idx in indices:
+        if idx < 1 or idx > len(items):
+            show_error(f"Invalid index: {idx} (reading list has {len(items)} papers)")
+            continue
+        paper = Paper(**items[idx - 1])
+        show_paper_detail(paper)
+        found += 1
+
+    if found == 0:
+        show_message("No valid indices provided.", "yellow")

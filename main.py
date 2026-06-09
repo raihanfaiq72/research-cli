@@ -2,25 +2,9 @@
 import os
 import sys
 import typer
-from typing import Optional, List
+from typing import Optional
 from utils.console import console, show_banner, show_error
-
-
-def _parse_indices(indices: str) -> List[int]:
-    result = []
-    for part in indices.split(","):
-        part = part.strip()
-        if not part:
-            continue
-        if "-" in part:
-            parts = part.split("-")
-            if len(parts) != 2:
-                raise ValueError(f"Invalid range: {part}")
-            start, end = int(parts[0].strip()), int(parts[1].strip())
-            result.extend(range(start, end + 1))
-        else:
-            result.append(int(part))
-    return result
+from commands.reading_list import parse_indices
 from commands.search import search_papers
 from commands.doi import fetch_by_doi
 from commands.abstract import fetch_abstract
@@ -29,7 +13,7 @@ from commands.pdf_translate import pdf_translate
 from commands.related import fetch_related
 from commands.trend import show_trend
 from commands.export import export_results
-from commands.reading_list import add_to_reading_list, remove_from_reading_list, list_reading_list
+from commands.reading_list import add_to_reading_list, remove_from_reading_list, list_reading_list, read_reading_list
 from models.paper import Paper
 
 app = typer.Typer(
@@ -68,6 +52,10 @@ app = typer.Typer(
     research save 1,2-8,10-13
 
     research reading-list
+
+    research read 1
+    research read 1,2,3
+    research read 1-5
 
     research remove 1,2,3
     research remove 1-5
@@ -306,7 +294,7 @@ def save(
         return
 
     try:
-        indices_list = _parse_indices(indices)
+        indices_list = parse_indices(indices)
     except ValueError:
         show_error("Invalid format. Use numbers and ranges, e.g. 1,2-8,10-13")
         return
@@ -326,6 +314,33 @@ def reading_list():
       $ research reading-list
     """
     list_reading_list()
+
+
+@app.command()
+def read(
+    indices: str = typer.Argument(
+        ...,
+        help="Paper indices to preview, e.g. 1,2,3 or 1-5 or 1,2-8,10-13",
+    ),
+):
+    """Show preview of saved papers by index.
+
+    Displays full details (title, authors, abstract, DOI, etc.)
+    for papers in your reading list. Supports ranges.
+
+    Examples:
+
+      $ research read 1
+      $ research read 1,2,3
+      $ research read 1-5
+      $ research read 1,2-8,10-13
+    """
+    try:
+        indices_list = parse_indices(indices)
+    except ValueError:
+        show_error("Invalid format. Use numbers and ranges, e.g. 1,2-8,10-13")
+        return
+    read_reading_list(indices_list)
 
 
 @app.command()
@@ -349,7 +364,7 @@ def remove(
       $ research remove 1,2-8,10-13
     """
     try:
-        indices_list = _parse_indices(indices)
+        indices_list = parse_indices(indices)
     except ValueError:
         show_error("Invalid format. Use numbers and ranges, e.g. 1,2-8,10-13")
         return
