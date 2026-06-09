@@ -36,8 +36,9 @@ def get_last_results() -> List[Paper]:
 def search_papers(
     query: str,
     year: Optional[str] = None,
-    limit: int = 20,
+    limit: int = 200,
     sort_by: str = "relevance",
+    page: int = 1,
 ):
     services = {
         "OpenAlex": OpenAlexService(),
@@ -68,7 +69,7 @@ def search_papers(
                         ):
                             all_papers.append(paper)
                 progress.remove_task(task)
-            except Exception as e:
+            except Exception:
                 progress.remove_task(task)
                 continue
 
@@ -78,16 +79,24 @@ def search_papers(
         all_papers.sort(key=lambda p: p.citation_count, reverse=True)
     elif sort_by == "year":
         all_papers.sort(key=lambda p: p.year or 0, reverse=True)
-    else:
-        pass
-
-    all_papers = all_papers[:limit]
 
     _save_last_results(all_papers)
 
-    show_search_results(all_papers, f'Search Results for "{query}"')
+    total = len(all_papers)
+    start = (page - 1) * limit
+    end = start + limit
+    page_papers = all_papers[start:end]
+
+    total_pages = max(1, (total + limit - 1) // limit)
+
+    title = f'Search Results for "{query}"'
+    if total_pages > 1:
+        title += f" (Page {page}/{total_pages})"
+
+    show_search_results(page_papers, title)
     show_message(
-        f"Found {len(all_papers)} unique papers across multiple sources.",
+        f"Found {total} unique papers across multiple sources. "
+        + (f"Showing page {page}/{total_pages}." if total_pages > 1 else ""),
         "blue",
     )
 

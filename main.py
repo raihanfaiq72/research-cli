@@ -46,6 +46,7 @@ app = typer.Typer(
     research trend "microservices" --start 2020 --end 2024
 
     research search "software arch" --limit 5
+    research search "machine learning" --page 2
 
     research save 1,2,3
     research save 1-5
@@ -83,7 +84,7 @@ def search(
         None, "--year", "-y", help="Year range filter, e.g. 2020-2026"
     ),
     limit: int = typer.Option(
-        20, "--limit", "-l", help="Number of results to return"
+        200, "--limit", "-l", help="Results per page"
     ),
     sort: str = typer.Option(
         "relevance",
@@ -91,19 +92,26 @@ def search(
         "-s",
         help="Sort by: relevance, citations, year",
     ),
+    page: int = typer.Option(
+        1, "--page", "-p", help="Page number for pagination"
+    ),
 ):
     """Search for academic papers by keyword.
+
+    Fetches up to 200 results per page from OpenAlex, Semantic Scholar,
+    and Crossref simultaneously. Use --page to browse more results.
 
     Examples:
 
       $ research search "microservices architecture"
       $ research search "digital agriculture" --year 2020-2026
       $ research search "software architecture" --sort citations --limit 10
+      $ research search "machine learning" --page 2
     """
     if sort not in ("relevance", "citations", "year"):
         show_error("Sort must be one of: relevance, citations, year")
         raise typer.Exit(1)
-    papers = search_papers(query, year=year, limit=limit, sort_by=sort)
+    papers = search_papers(query, year=year, limit=limit, sort_by=sort, page=page)
     return papers
 
 

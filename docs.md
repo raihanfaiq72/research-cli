@@ -96,8 +96,12 @@ python3 main.py search "microservices architecture"
 # Filter tahun
 python3 main.py search "digital agriculture" --year 2020-2026
 
-# Batasi jumlah hasil
+# Batasi jumlah hasil per halaman
 python3 main.py search "software architecture" --limit 10
+
+# Lihat halaman berikutnya (pagination)
+python3 main.py search "machine learning" --page 2
+python3 main.py search "machine learning" --limit 50 --page 3
 
 # Urutkan berdasarkan sitasi terbanyak
 python3 main.py search "api-first development" --sort citations
@@ -113,7 +117,8 @@ python3 main.py search "code smell detection" --year 2020-2026 --limit 15 --sort
 | Opsi | Alias | Default | Deskripsi |
 |------|-------|---------|-----------|
 | `--year` | `-y` | — | Filter rentang tahun, format: `2020-2026` |
-| `--limit` | `-l` | `20` | Jumlah hasil maksimal |
+| `--limit` | `-l` | `200` | Jumlah hasil per halaman |
+| `--page` | `-p` | `1` | Halaman ke- (pagination) |
 | `--sort` | `-s` | `relevance` | Urutan: `relevance`, `citations`, `year` |
 
 **Output:**
