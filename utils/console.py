@@ -39,7 +39,7 @@ def show_search_results(papers: List[Paper], title: str = "Search Results"):
     table = Table(title=title, border_style="cyan", header_style="bold cyan")
     table.add_column("#", style="dim", width=4)
     table.add_column("Year", width=6)
-    table.add_column("Title", width=60)
+        table.add_column("Title", width=80)
     table.add_column("Citations", width=10, justify="right")
     table.add_column("OA", width=4, justify="center")
 
@@ -47,7 +47,7 @@ def show_search_results(papers: List[Paper], title: str = "Search Results"):
         table.add_row(
             str(idx),
             paper.display_year(),
-            paper.title[:57] + "..." if len(paper.title) > 57 else paper.title,
+            paper.title,
             paper.display_citations(),
             paper.display_oa(),
         )
