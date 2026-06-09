@@ -97,13 +97,14 @@ def _translate_chunk(translator, chunk: str, max_retries: int = 3) -> str:
     return chunk
 
 
-def _translate_text(text: str, target_lang_3: str, progress=None, task=None) -> str:
+def _translate_text(text: str, target_lang_3: str, translator=None, progress=None, task=None) -> str:  # noqa: PLR0913
     from deep_translator import GoogleTranslator
 
     target_map = {"eng": "en", "idn": "id"}
     target = target_map.get(target_lang_3, target_lang_3)
 
-    translator = GoogleTranslator(source="auto", target=target)
+    if translator is None:
+        translator = GoogleTranslator(source="auto", target=target)
 
     max_chars = 2000
     if len(text) <= max_chars:
@@ -134,8 +135,8 @@ def _translate_text(text: str, target_lang_3: str, progress=None, task=None) -> 
             chunks.append(chunk)
         if task:
             progress.update(task, advance=len(chunk))
-        if i + max_chars < len(text):
-            time.sleep(0.3)
+        if i + max_chars < len(text) and current_chunk % 10 == 0:
+            time.sleep(0.2)
 
     if task:
         progress.update(
@@ -338,7 +339,25 @@ def pdf_translate(
             results.append((lang, "skipped (same language)"))
             continue
 
-        show_message(f"Translating to {target_label}...", "cyan")
+        # Initialize translator outside progress to avoid hanging the bar
+        show_message(f"Initializing {target_label} translator...", "cyan")
+        from deep_translator import GoogleTranslator
+
+        target_map = {"eng": "en", "idn": "id"}
+        trg = target_map.get(lang, lang)
+        try:
+            translator = GoogleTranslator(source="auto", target=trg)
+        except Exception as e:
+            show_message(f"Failed to initialize translator: {e}", "red")
+            results.append((lang, "failed"))
+            continue
+
+        total_chunks_est = (len(text) + 1999) // 2000
+        show_message(
+            f"Translating to {target_label}: ~{total_chunks_est} chunks, "
+            f"estimated {total_chunks_est * 2}s...",
+            "cyan",
+        )
 
         with Progress(
             TextColumn("[progress.description]{task.description}"),
@@ -351,12 +370,14 @@ def pdf_translate(
             task = progress.add_task(
                 f"Translating {len(text)} chars...", total=len(text)
             )
+            progress.update(task, completed=0)
 
             try:
-                translated = _translate_text(text, lang, progress=progress, task=task)
+                translated = _translate_text(
+                    text, lang, translator=translator, progress=progress, task=task
+                )
             except Exception as e:
                 show_message(f"Translation to {target_label} failed: {e}", "red")
-                progress.update(task, completed=len(text))
                 results.append((lang, "failed"))
                 continue
 
