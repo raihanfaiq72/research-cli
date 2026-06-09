@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import time
 import httpx
 from datetime import datetime
 from utils.console import console, show_error, show_message
@@ -83,32 +84,51 @@ def _detect_language(text: str) -> tuple[str, str]:
         return "unknown", "unknown"
 
 
+def _translate_chunk(translator, chunk: str, max_retries: int = 3) -> str:
+    for attempt in range(max_retries):
+        try:
+            return translator.translate(chunk)
+        except Exception as e:
+            if attempt < max_retries - 1:
+                wait = (attempt + 1) * 2
+                time.sleep(wait)
+            else:
+                raise
+    return chunk
+
+
 def _translate_text(text: str, target_lang_3: str, progress=None, task=None) -> str:
-    from deep_translator import GoogleTranslator, exceptions
+    from deep_translator import GoogleTranslator
 
     target_map = {"eng": "en", "idn": "id"}
     target = target_map.get(target_lang_3, target_lang_3)
 
     translator = GoogleTranslator(source="auto", target=target)
 
-    max_chars = 4500
+    max_chars = 2000
     if len(text) <= max_chars:
-        result = translator.translate(text)
+        result = _translate_chunk(translator, text)
         if task:
             progress.update(task, completed=len(text))
         return result
 
     chunks = []
+    total_chunks = (len(text) + max_chars - 1) // max_chars
     for i in range(0, len(text), max_chars):
         chunk = text[i : i + max_chars]
         try:
-            translated = translator.translate(chunk)
+            translated = _translate_chunk(translator, chunk)
             chunks.append(translated)
-        except exceptions.GoogleTranslateError as e:
-            show_message(f"Translation error at offset {i}: {e}", "yellow")
+        except Exception as e:
+            show_message(
+                f"Translation error chunk {i // max_chars + 1}/{total_chunks}: {e}",
+                "yellow",
+            )
             chunks.append(chunk)
         if task:
             progress.update(task, advance=len(chunk))
+        if i + max_chars < len(text):
+            time.sleep(0.3)
 
     return "\n".join(chunks)
 
@@ -153,7 +173,7 @@ def _create_pdf_from_text(text: str, output_path: str, title: str = ""):
     pdf.add_page()
     font_path = _get_font_path()
     if font_path:
-        pdf.add_font("CustomFont", "", font_path, uni=True)
+        pdf.add_font("CustomFont", "", font_path)
         pdf.set_font("CustomFont", "", 11)
     else:
         pdf.set_font("Helvetica", "", 11)
@@ -279,6 +299,8 @@ def pdf_translate(
         TextColumn,
     )
 
+    results = []
+
     for lang in valid_langs:
         if lang == "eng":
             target_label = "English"
@@ -298,6 +320,7 @@ def pdf_translate(
                 shutil.copy2(orig_path, out_path)
             else:
                 shutil.copy2(pdf_path, out_path)
+            results.append((lang, "skipped (same language)"))
             continue
 
         show_message(f"Translating to {target_label}...", "cyan")
@@ -314,8 +337,9 @@ def pdf_translate(
             try:
                 translated = _translate_text(text, lang, progress=progress, task=task)
             except Exception as e:
-                show_message(f"Translation failed: {e}", "red")
+                show_message(f"Translation to {target_label} failed: {e}", "red")
                 progress.update(task, completed=len(text))
+                results.append((lang, "failed"))
                 continue
 
         out_name = f"{lang}_{detected_3}.pdf"
@@ -329,8 +353,13 @@ def pdf_translate(
             f.write(translated)
 
         show_message(f"Saved: {out_path}", "green")
+        results.append((lang, "success"))
 
     if is_url and os.path.exists(pdf_path):
         os.remove(pdf_path)
 
-    show_message(f"\nAll files saved in: {batch_dir}", "bold green")
+    success_count = sum(1 for _, s in results if s == "success")
+    show_message(
+        f"\nDone. {success_count}/{len(valid_langs)} translations saved in: {batch_dir}",
+        "bold green",
+    )
