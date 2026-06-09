@@ -149,18 +149,41 @@ def get_reading_list_papers() -> List[Paper]:
     return [Paper(**item) for item in items]
 
 
-def read_reading_list(indices: List[int]):
+def read_reading_list(indices: List[int], search: str = "", year: Optional[str] = None):
     items = _load_reading_list()
     if not items:
         show_error("Reading list is empty.")
         return
 
+    papers = [Paper(**item) for item in items]
+
+    if search:
+        q = search.lower()
+        papers = [p for p in papers if p.title and q in p.title.lower()]
+
+    if year:
+        if "-" in year:
+            parts = year.split("-")
+            try:
+                y_start, y_end = int(parts[0]), int(parts[1])
+                papers = [p for p in papers if p.year and y_start <= p.year <= y_end]
+            except ValueError:
+                show_error(f"Invalid year range: {year}")
+                return
+        else:
+            try:
+                y = int(year)
+                papers = [p for p in papers if p.year == y]
+            except ValueError:
+                show_error(f"Invalid year: {year}")
+                return
+
     found = 0
     for idx in indices:
-        if idx < 1 or idx > len(items):
-            show_error(f"Invalid index: {idx} (reading list has {len(items)} papers)")
+        if idx < 1 or idx > len(papers):
+            show_error(f"Invalid index: {idx} (filtered list has {len(papers)} papers)")
             continue
-        paper = Paper(**items[idx - 1])
+        paper = papers[idx - 1]
         show_paper_detail(paper)
         found += 1
 

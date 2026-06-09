@@ -346,25 +346,33 @@ def read(
         ...,
         help="Paper indices to preview, e.g. 1,2,3 or 1-5 or 1,2-8,10-13",
     ),
+    search: Optional[str] = typer.Option(
+        None, "--search", "-s", help="Filter by title keyword (same as reading-list)"
+    ),
+    year: Optional[str] = typer.Option(
+        None, "--year", "-y", help="Filter by year or range (same as reading-list)"
+    ),
 ):
     """Show preview of saved papers by index.
 
     Displays full details (title, authors, abstract, DOI, etc.)
-    for papers in your reading list. Supports ranges.
+    for papers in your reading list. Use --search/--year to
+    filter first, then read from filtered results.
 
     Examples:
 
       $ research read 1
       $ research read 1,2,3
       $ research read 1-5
-      $ research read 1,2-8,10-13
+      $ research read 1 --search pertanian
+      $ research read 1,2-8,10-13 --year 2020-2024
     """
     try:
         indices_list = parse_indices(indices)
     except ValueError:
         show_error("Invalid format. Use numbers and ranges, e.g. 1,2-8,10-13")
         return
-    read_reading_list(indices_list)
+    read_reading_list(indices_list, search=search or "", year=year)
 
 
 @app.command()
