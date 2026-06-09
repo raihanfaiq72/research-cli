@@ -17,7 +17,7 @@ Menggunakan **7 sumber Open Access legal**: OpenAlex, Crossref, Unpaywall, CORE,
   - [abstract](#abstract--ambil-abstrak)
   - [pdf](#pdf--cari-url-pdf)
   - [download](#download--unduh-pdf)
-  - [pdf-translate](#pdf-translate--terjemahkan-pdf)
+  - [pdf-translate / translate](#pdf-translate--translate--terjemahkan-pdf)
   - [related](#related--paper-terkait)
   - [trend](#trend--tren-publikasi)
   - [save](#save--simpan-ke-reading-list)
@@ -234,7 +234,9 @@ PDF saved: downloads/A_review_of_social_science...pdf (1204.5 KB)
 
 ---
 
-### `pdf-translate` — Terjemahkan PDF
+### `pdf-translate` / `translate` — Terjemahkan PDF
+
+Alias: `translate` (lebih pendek, fungsinya sama persis).
 
 Menerjemahkan paper PDF ke bahasa Inggris (`eng`) dan/atau Indonesia (`idn`). Mendukung input dari **URL** maupun **file lokal**. Bahasa asal paper otomatis terdeteksi (mendukung berbagai bahasa).
 
@@ -248,6 +250,7 @@ Menerjemahkan paper PDF ke bahasa Inggris (`eng`) dan/atau Indonesia (`idn`). Me
 ```bash
 # Terjemahkan dari URL ke Inggris
 python3 main.py pdf-translate https://example.com/paper.pdf --to eng
+python3 main.py translate https://example.com/paper.pdf --to eng   # alias
 
 # Terjemahkan dari URL ke Indonesia
 python3 main.py pdf-translate https://example.com/paper.pdf --to idn
@@ -283,6 +286,8 @@ pdf_translate_process/
 ```
 
 > **Catatan:** Terjemahan menggunakan **Google Translate** (via `deep-translator`). Koneksi internet diperlukan. Untuk PDF hasil scan / image-based tidak bisa diekstrak.
+>
+> **Tip:** Jika kamu lupa mengetik `pdf-translate` dan langsung memasukkan path file PDF, CLI akan otomatis menampilkan saran perintah yang benar.
 
 ---
 

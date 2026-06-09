@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import os
+import sys
 import typer
 from typing import Optional
 from utils.console import console, show_banner, show_error
@@ -192,6 +194,33 @@ def pdf_translate_cmd(
     pdf_translate(source, langs, output_dir=output)
 
 
+@app.command("translate")
+def translate_cmd(
+    source: str = typer.Argument(
+        ..., help="PDF URL or local file path"
+    ),
+    to: str = typer.Option(
+        "eng", "--to", "-t", help="Target language(s): eng, idn (comma-separated)"
+    ),
+    output: Optional[str] = typer.Option(
+        None, "--output", "-o", help="Custom output directory"
+    ),
+):
+    """Shorthand for [bold]pdf-translate[/bold].
+
+    Translates a PDF to English and/or Indonesian.
+    Usage and options are identical to [bold]pdf-translate[/bold].
+
+    Examples:
+
+      $ research translate https://example.com/paper.pdf --to eng
+
+      $ research translate paper.pdf --to eng,idn
+    """
+    langs = [l.strip() for l in to.split(",")]
+    pdf_translate(source, langs, output_dir=output)
+
+
 @app.command()
 def related(
     doi: str = typer.Argument(..., help="Digital Object Identifier (DOI)"),
@@ -326,4 +355,21 @@ def export(
 
 
 if __name__ == "__main__":
-    app()
+    try:
+        app()
+    except SystemExit:
+        # Detect if user passed a file path or URL as a command name
+        if len(sys.argv) > 1:
+            arg = sys.argv[1]
+            if (
+                arg.endswith(".pdf")
+                or os.path.exists(arg)
+                or arg.startswith(("http://", "https://"))
+            ):
+                console.print(
+                    f"\n[yellow]Tip: Did you mean [bold]research pdf-translate {arg}[/bold]?"
+                )
+                console.print(
+                    "  Or use [bold]research translate[/bold] as shorthand.\n"
+                )
+        raise
