@@ -17,6 +17,7 @@ Menggunakan **7 sumber Open Access legal**: OpenAlex, Crossref, Unpaywall, CORE,
   - [abstract](#abstract--ambil-abstrak)
   - [pdf](#pdf--cari-url-pdf)
   - [download](#download--unduh-pdf)
+  - [pdf-translate](#pdf-translate--terjemahkan-pdf)
   - [related](#related--paper-terkait)
   - [trend](#trend--tren-publikasi)
   - [save](#save--simpan-ke-reading-list)
@@ -230,6 +231,58 @@ PDF saved: downloads/A_review_of_social_science...pdf (1204.5 KB)
 - Paper **paywall** (✗) seperti IEEE, Springer, Elsevier tidak bisa diunduh
 - Coba cari preprint di arXiv jika paper asli berbayar
 - File disimpan di folder `downloads/` dengan nama dari judul paper
+
+---
+
+### `pdf-translate` — Terjemahkan PDF
+
+Menerjemahkan paper PDF ke bahasa Inggris (`eng`) dan/atau Indonesia (`idn`). Mendukung input dari **URL** maupun **file lokal**. Bahasa asal paper otomatis terdeteksi (mendukung berbagai bahasa).
+
+**Alur kerja:**
+1. Ambil PDF (dari URL atau file lokal)
+2. Ekstrak teks dari PDF
+3. Deteksi bahasa asal secara otomatis
+4. Terjemahkan ke bahasa target
+5. Simpan original dan hasil terjemahan sebagai PDF + TXT
+
+```bash
+# Terjemahkan dari URL ke Inggris
+python3 main.py pdf-translate https://example.com/paper.pdf --to eng
+
+# Terjemahkan dari URL ke Indonesia
+python3 main.py pdf-translate https://example.com/paper.pdf --to idn
+
+# Terjemahkan ke Inggris dan Indonesia sekaligus
+python3 main.py pdf-translate https://example.com/paper.pdf --to eng,idn
+
+# Terjemahkan file lokal
+python3 main.py pdf-translate ./paper.pdf --to eng
+
+# Output ke folder kustom
+python3 main.py pdf-translate https://example.com/paper.pdf --to eng,idn --output ./my_translations
+```
+
+**Options:**
+| Opsi | Alias | Default | Deskripsi |
+|------|-------|---------|-----------|
+| `--to` | `-t` | `eng` | Bahasa target: `eng`, `idn`, atau `eng,idn` |
+| `--output` | `-o` | — | Direktori output kustom (default: `pdf_translate_process/`) |
+
+**Struktur Output:**
+
+Setiap batch terjemahan disimpan di folder dengan format `YYYY-MM-DD_HH-MM-SS_nama_file/`:
+
+```
+pdf_translate_process/
+└── 2026-06-09_14-30-00_journal/
+    ├── original_eng.pdf      # Original (jika bahasa Inggris)
+    ├── en_spa.pdf            # Terjemahan Inggris (dari Spanish)
+    ├── idn_spa.pdf           # Terjemahan Indonesia (dari Spanish)
+    ├── en_spa.txt            # Teks terjemahan Inggris
+    └── idn_spa.txt           # Teks terjemahan Indonesia
+```
+
+> **Catatan:** Terjemahan menggunakan **Google Translate** (via `deep-translator`). Koneksi internet diperlukan. Untuk PDF hasil scan / image-based tidak bisa diekstrak.
 
 ---
 

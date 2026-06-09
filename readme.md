@@ -31,6 +31,16 @@ Retrieve:
 * Abstract
 * Open Access Status
 
+### PDF Translation
+
+Translate research papers from any language to English or Indonesian:
+
+```bash
+research pdf-translate https://example.com/paper.pdf --to eng,idn
+```
+
+Auto-detects original language, extracts text, translates, and saves original + translated PDFs in organized batch folders.
+
 ### Open Access PDF Finder
 
 Discover legally available PDFs from:
@@ -112,6 +122,13 @@ Find Open Access PDF:
 research pdf 10.xxxx/xxxxx
 ```
 
+Translate PDF (URL or local file):
+
+```bash
+research pdf-translate https://example.com/paper.pdf --to eng
+research pdf-translate paper.pdf --to eng,idn
+```
+
 Find related research:
 
 ```bash
@@ -170,6 +187,10 @@ Service Layer
 * Requests / HTTPX
 * Pydantic
 * Pandas
+* PyMuPDF
+* langdetect
+* deep-translator
+* fpdf2
 * OpenAlex API
 * Crossref API
 * Unpaywall API

@@ -6,6 +6,7 @@ from commands.search import search_papers
 from commands.doi import fetch_by_doi
 from commands.abstract import fetch_abstract
 from commands.pdf import find_pdf, download_pdf
+from commands.pdf_translate import pdf_translate
 from commands.related import fetch_related
 from commands.trend import show_trend
 from commands.export import export_results
@@ -34,6 +35,10 @@ app = typer.Typer(
     research download 10.1016/j.njas.2019.100315 --output ./pdfs
 
     research related 10.1016/j.njas.2019.100315 --limit 15
+
+    research pdf-translate https://example.com/paper.pdf --to eng
+
+    research pdf-translate paper.pdf --to eng,idn
 
     research trend "microservices" --start 2020 --end 2024
 
@@ -155,6 +160,36 @@ def download(
       $ research download 10.1109/ms.2016.64 --output ./pdfs
     """
     download_pdf(doi, output_dir=output or None)
+
+
+@app.command("pdf-translate")
+def pdf_translate_cmd(
+    source: str = typer.Argument(
+        ..., help="PDF URL or local file path"
+    ),
+    to: str = typer.Option(
+        "eng", "--to", "-t", help="Target language(s): eng, idn (comma-separated)"
+    ),
+    output: Optional[str] = typer.Option(
+        None, "--output", "-o", help="Custom output directory"
+    ),
+):
+    """Translate a PDF to English and/or Indonesian.
+
+    Extracts text from a PDF (URL or local file), detects the original
+    language, and translates to the specified target language(s). Saves
+    the original and translated PDFs in pdf_translate_process/.
+
+    Examples:
+
+      $ research pdf-translate https://example.com/paper.pdf --to eng
+
+      $ research pdf-translate https://example.com/paper.pdf --to idn
+
+      $ research pdf-translate paper.pdf --to eng,idn --output ./my_translations
+    """
+    langs = [l.strip() for l in to.split(",")]
+    pdf_translate(source, langs, output_dir=output)
 
 
 @app.command()
