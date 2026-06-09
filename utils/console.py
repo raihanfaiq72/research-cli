@@ -70,12 +70,7 @@ def show_paper_detail(paper: Paper):
     ]
 
     if paper.abstract:
-        abstract_text = (
-            paper.abstract[:500] + "..."
-            if len(paper.abstract) > 500
-            else paper.abstract
-        )
-        details.append(f"\n[bold]Abstract:[/bold]\n{abstract_text}")
+        details.append(f"\n[bold]Abstract:[/bold]\n{paper.abstract}")
 
     panel = Panel(
         "\n".join(details),
