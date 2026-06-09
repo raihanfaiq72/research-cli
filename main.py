@@ -310,18 +310,34 @@ def save(
     add_to_reading_list(papers, indices_list)
 
 
-@app.command()
-def reading_list():
-    """Display your reading list.
+@app.command("reading-list")
+def reading_list_cmd(
+    search: Optional[str] = typer.Option(
+        None, "--search", "-s", help="Filter by title keyword"
+    ),
+    year: Optional[str] = typer.Option(
+        None, "--year", "-y", help="Filter by year or range, e.g. 2020 or 2020-2024"
+    ),
+    page: int = typer.Option(
+        1, "--page", "-p", help="Page number"
+    ),
+    limit: int = typer.Option(
+        200, "--limit", "-l", help="Results per page"
+    ),
+):
+    """Display your reading list with filters and pagination.
 
-    Shows all papers you've saved using the 'save' command.
-    Papers are stored persistently in data/reading_list.json.
+    Shows papers you've saved. Supports title search, year filter,
+    and pagination for large collections.
 
     Examples:
 
       $ research reading-list
+      $ research reading-list --search microservices
+      $ research reading-list --year 2024
+      $ research reading-list --year 2020-2024 --page 2
     """
-    list_reading_list()
+    list_reading_list(search=search or "", year=year, page=page, limit=limit)
 
 
 @app.command()

@@ -91,14 +91,56 @@ def remove_from_reading_list(indices: List[int]):
     show_message(f"Removed {removed} paper(s) from reading list.", "green")
 
 
-def list_reading_list():
+def list_reading_list(search: str = "", year: Optional[str] = None, page: int = 1, limit: int = 200):
     items = _load_reading_list()
     if not items:
         show_message("Reading list is empty.", "yellow")
         return []
 
     papers = [Paper(**item) for item in items]
-    show_search_results(papers, "Reading List")
+
+    if search:
+        q = search.lower()
+        papers = [p for p in papers if p.title and q in p.title.lower()]
+
+    if year:
+        if "-" in year:
+            parts = year.split("-")
+            try:
+                y_start, y_end = int(parts[0]), int(parts[1])
+                papers = [p for p in papers if p.year and y_start <= p.year <= y_end]
+            except ValueError:
+                show_error(f"Invalid year range: {year}")
+                return []
+        else:
+            try:
+                y = int(year)
+                papers = [p for p in papers if p.year == y]
+            except ValueError:
+                show_error(f"Invalid year: {year}")
+                return []
+
+    total = len(papers)
+    total_pages = max(1, (total + limit - 1) // limit)
+    start = (page - 1) * limit
+    page_papers = papers[start:start + limit]
+
+    title = "Reading List"
+    parts = []
+    if search:
+        parts.append(f'filter: "{search}"')
+    if year:
+        parts.append(f"year: {year}")
+    if total_pages > 1:
+        parts.append(f"Page {page}/{total_pages}")
+    if parts:
+        title += " (" + ", ".join(parts) + ")"
+
+    show_search_results(page_papers, title)
+    msg = f"Found {total} papers in reading list."
+    if total_pages > 1:
+        msg += f" Showing page {page}/{total_pages}."
+    show_message(msg, "blue")
     return papers
 
 
