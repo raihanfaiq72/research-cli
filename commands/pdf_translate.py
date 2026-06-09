@@ -116,12 +116,19 @@ def _translate_text(text: str, target_lang_3: str, progress=None, task=None) -> 
     total_chunks = (len(text) + max_chars - 1) // max_chars
     for i in range(0, len(text), max_chars):
         chunk = text[i : i + max_chars]
+        current_chunk = i // max_chars + 1
+        pct = min(100, int((i / len(text)) * 100))
+        if task:
+            progress.update(
+                task,
+                description=f"Translating chunk {current_chunk}/{total_chunks} ({pct}%)",
+            )
         try:
             translated = _translate_chunk(translator, chunk)
             chunks.append(translated)
         except Exception as e:
             show_message(
-                f"Translation error chunk {i // max_chars + 1}/{total_chunks}: {e}",
+                f"Translation error chunk {current_chunk}/{total_chunks}: {e}",
                 "yellow",
             )
             chunks.append(chunk)
@@ -130,6 +137,11 @@ def _translate_text(text: str, target_lang_3: str, progress=None, task=None) -> 
         if i + max_chars < len(text):
             time.sleep(0.3)
 
+    if task:
+        progress.update(
+            task,
+            description=f"Translated {total_chunks}/{total_chunks} (100%)",
+        )
     return "\n".join(chunks)
 
 
@@ -297,6 +309,9 @@ def pdf_translate(
         Progress,
         BarColumn,
         TextColumn,
+        TaskProgressColumn,
+        TimeRemainingColumn,
+        TimeElapsedColumn,
     )
 
     results = []
@@ -328,6 +343,9 @@ def pdf_translate(
         with Progress(
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
+            TaskProgressColumn(),
+            TimeRemainingColumn(),
+            TimeElapsedColumn(),
             console=console,
         ) as progress:
             task = progress.add_task(
